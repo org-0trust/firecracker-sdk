@@ -26,6 +26,11 @@ impl VM {
     async fn read_raw(&mut self, raw: &mut [u8]) -> Result<usize> {
         Ok(self.stream.read(raw).await?)
     }
+
+    pub async fn close(mut self) -> Result<()> {
+        self.stream.shutdown().await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

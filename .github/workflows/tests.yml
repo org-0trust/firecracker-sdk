@@ -25,4 +25,4 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
 
       - name: Run tests
-        run: cargo test --all --verbose
+        run: cargo test --lib --verbose

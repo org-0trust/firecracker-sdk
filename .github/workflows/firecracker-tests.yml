@@ -1,0 +1,43 @@
+name: Firecracker Integration Tests
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  firecracker-test:
+    name: Run Firecracker integration tests
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Firecracker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+          curl -L https://github.com/firecracker-microvm/firecracker/releases/latest/download/firecracker-$(uname -m) -o firecracker
+          chmod +x firecracker
+          sudo mv firecracker /usr/local/bin/firecracker
+          firecracker --version
+
+      - name: Download test kernel and rootfs
+        run: |
+          mkdir -p resources
+          curl -L https://s3.amazonaws.com/spec.ccfc.min/img/hello/kernel/vmlinux -o resources/vmlinux
+          curl -L https://s3.amazonaws.com/spec.ccfc.min/img/hello/fsfiles/hello-rootfs.ext4 -o resources/rootfs.ext4
+
+      - name: Run Firecracker integration tests
+        run: |
+          sudo chmod a+rw /dev/kvm || true
+          cargo test --test firecracker_startup -- --nocapture --test-threads=1
