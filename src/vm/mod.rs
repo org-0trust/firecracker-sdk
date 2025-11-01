@@ -9,11 +9,13 @@ use crate::vm::firercracker_process::FirecrackerProcess;
 pub mod firercracker_process;
 pub mod vm_socket;
 
+#[allow(unused)]
 pub struct VM {
     stream: UnixStream,
     firercracker_proc: FirecrackerProcess,
 }
 
+#[allow(unused)]
 impl VM {
     pub fn new(stream: UnixStream, process: FirecrackerProcess) -> Self {
         Self {
