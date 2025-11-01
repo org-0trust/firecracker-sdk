@@ -4,12 +4,15 @@ use tokio::{
     net::UnixStream,
 };
 
+pub mod firercracker_process;
 pub mod vm_socket;
 
+#[allow(unused)]
 pub struct VM {
     stream: UnixStream,
 }
 
+#[allow(unused)]
 impl VM {
     pub fn new(stream: UnixStream) -> Self {
         Self { stream }
@@ -27,10 +30,12 @@ impl VM {
 
 #[cfg(test)]
 mod tests {
+
     use anyhow::Result;
     use tempfile::tempdir;
     use tokio::{
         io::{AsyncReadExt, AsyncWriteExt},
+        join,
         net::UnixListener,
     };
 
@@ -41,6 +46,8 @@ mod tests {
         let dir = tempdir()?;
         let socket = dir.path().join("echo.socket");
         let lis = UnixListener::bind(&socket)?;
+
+        assert!(socket.exists());
 
         let server = tokio::spawn(async move {
             let (mut socket, _) = lis.accept().await?;
@@ -57,7 +64,7 @@ mod tests {
         let n = client.read_raw(&mut buf).await?;
         assert_eq!(&buf[..n], b"pong");
 
-        server.await??;
+        join!(server).0??;
 
         dir.close()?;
         Ok(())

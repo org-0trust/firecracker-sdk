@@ -17,6 +17,7 @@ impl VMSocket {
     }
 
     pub async fn connect<P: AsRef<Path>>(self, path: P) -> Result<VM> {
-        Ok(VM::new(self.socket.connect(path).await?))
+        let stream = self.socket.connect(&path).await?;
+        Ok(VM::new(stream))
     }
 }
