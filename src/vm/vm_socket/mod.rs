@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 use tokio::net::UnixSocket;
 
-use crate::vm::VM;
+use crate::vm::{VM, firercracker_process::firecracker_startup::FirecrackerStartup};
 
 pub struct VMSocket {
     socket: UnixSocket,
@@ -17,6 +17,8 @@ impl VMSocket {
     }
 
     pub async fn connect<P: AsRef<Path>>(self, path: P) -> Result<VM> {
-        Ok(VM::new(self.socket.connect(path).await?))
+        let stream = self.socket.connect(&path).await?;
+        let process = FirecrackerStartup::new().api_socket(&path).start()?;
+        Ok(VM::new(stream, process))
     }
 }

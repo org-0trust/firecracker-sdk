@@ -4,15 +4,22 @@ use tokio::{
     net::UnixStream,
 };
 
+use crate::vm::firercracker_process::FirecrackerProcess;
+
+pub mod firercracker_process;
 pub mod vm_socket;
 
 pub struct VM {
     stream: UnixStream,
+    firercracker_proc: FirecrackerProcess,
 }
 
 impl VM {
-    pub fn new(stream: UnixStream) -> Self {
-        Self { stream }
+    pub fn new(stream: UnixStream, process: FirecrackerProcess) -> Self {
+        Self {
+            stream,
+            firercracker_proc: process,
+        }
     }
 
     async fn send_raw(&mut self, raw: &[u8]) -> Result<()> {
