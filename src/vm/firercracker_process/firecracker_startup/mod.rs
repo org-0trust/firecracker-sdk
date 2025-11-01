@@ -18,11 +18,17 @@ impl FirecrackerStartup {
 
     pub fn api_socket<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.command
-            .args(&["--api-sock", &path.as_ref().to_string_lossy()]);
+            .args(["--api-sock", &path.as_ref().to_string_lossy()]);
         self
     }
 
     pub fn start(mut self) -> Result<FirecrackerProcess> {
         Ok(FirecrackerProcess::new(self.command.spawn()?))
+    }
+}
+
+impl Default for FirecrackerStartup {
+    fn default() -> Self {
+        Self::new()
     }
 }
