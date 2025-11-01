@@ -7,7 +7,7 @@ description = "SDK for working with Firecracker MicroVM using the Rust programmi
 repository = "https://github.com/org-0trust/firecracker-sdk"
 license-file = "LICENSE"
 keywords = ["sdk", "aws", "api", "firecracker", "firecracker-sdk"]
-categories = ["api-bindings", "virtualization", "configuration"]
+categories = ["api-bindings", "virtualization", "config"]
 
 [dependencies]
 anyhow = "1.0.100"
