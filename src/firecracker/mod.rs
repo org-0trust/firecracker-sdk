@@ -4,6 +4,7 @@ use tokio::{
     net::UnixStream,
 };
 
+pub mod firecracker_configuration;
 pub mod firecracker_socket;
 pub mod firercracker_process;
 
