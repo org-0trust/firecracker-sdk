@@ -3,6 +3,7 @@ use tokio::process::Child;
 
 pub mod firecracker_startup;
 
+/// Structure for managing the Firecracker process created using `FirecrackerStartup`
 pub struct FirecrackerProcess {
     process: Child,
 }
@@ -12,6 +13,7 @@ impl FirecrackerProcess {
         Self { process: child }
     }
 
+    /// Correctly starts the process stop and waits for it to complete
     pub async fn stop(&mut self) -> Result<()> {
         self.process.kill().await?;
         Ok(())

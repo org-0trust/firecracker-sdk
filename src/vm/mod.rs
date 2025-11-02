@@ -7,6 +7,17 @@ use tokio::{
 pub mod firercracker_process;
 pub mod vm_socket;
 
+/// A structure that allows you to work safely with VMs
+///
+/// Exemple:
+/// ```no_run
+/// let vm_process = FirecrackerStartup::new()
+///     .api_sock("/tmp/some.socket")
+///     .start().unwrap();
+///
+/// let vm_socket = VMSocket::new().unwrap();
+/// let vm = vm_socket.connect("/tmp/some.socket");
+/// ```
 #[allow(unused)]
 pub struct VM {
     stream: UnixStream,
@@ -14,7 +25,7 @@ pub struct VM {
 
 #[allow(unused)]
 impl VM {
-    pub fn new(stream: UnixStream) -> Self {
+    pub(crate) fn new(stream: UnixStream) -> Self {
         Self { stream }
     }
 
@@ -27,6 +38,7 @@ impl VM {
         Ok(self.stream.read(raw).await?)
     }
 
+    /// Safely closes the unix stream
     pub async fn close(mut self) -> Result<()> {
         self.stream.shutdown().await?;
         Ok(())
