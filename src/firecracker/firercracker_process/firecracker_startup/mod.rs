@@ -64,42 +64,34 @@ impl FirecrackerStartup {
 
     async fn get_kernel(&self) -> Result<PathBuf> {
         let env_path = env::var("FIRECRACKER_KERNEL");
-        let (path, download_path) = if env_path.is_ok() {
-            (
-                PathBuf::from(env_path?),
-                PathBuf::from(
-                    env::home_dir()
-                        .unwrap_or(
-                            env::current_exe()?
-                                .parent()
-                                .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                                .to_path_buf(),
-                        )
-                        .join(".firecracker_kernel/download"),
-                ),
-            )
+        let env_download_path = env::var("FIRECRACKER_KERNEL_DOWNLOAD");
+        let path = if env_path.is_ok() {
+            PathBuf::from(env_path?)
         } else {
-            (
-                PathBuf::from(
-                    env::home_dir()
-                        .unwrap_or(
-                            env::current_exe()?
-                                .parent()
-                                .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                                .to_path_buf(),
-                        )
-                        .join(".firecracker_kernel/latest/vmlinux.bin"),
-                ),
-                PathBuf::from(
-                    env::home_dir()
-                        .unwrap_or(
-                            env::current_exe()?
-                                .parent()
-                                .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                                .to_path_buf(),
-                        )
-                        .join(".firecracker_kernel/download"),
-                ),
+            PathBuf::from(
+                env::home_dir()
+                    .unwrap_or(
+                        env::current_exe()?
+                            .parent()
+                            .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                            .to_path_buf(),
+                    )
+                    .join(".firecracker_kernel/latest/vmlinux.bin"),
+            )
+        };
+
+        let download_path = if env_download_path.is_ok() {
+            PathBuf::from(env_download_path?)
+        } else {
+            PathBuf::from(
+                env::home_dir()
+                    .unwrap_or(
+                        env::current_exe()?
+                            .parent()
+                            .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                            .to_path_buf(),
+                    )
+                    .join(".firecracker_kernel/download"),
             )
         };
 
@@ -121,9 +113,8 @@ impl FirecrackerStartup {
 
         let xml = Client::new().get(&list_url).send().await?.text().await?;
 
-        let re =
-            Regex::new(r"(?<=<Key>)(firecracker-ci/v1\.10/x86_64/vmlinux-5\.10\.\d{3})(?=</Key>)")?;
-        let mut versions: Vec<_> = re.find_iter(&xml).map(|m| m.as_str().to_string()).collect();
+        let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/vmlinux-5\.10\.\d{3})</Key>")?;
+        let mut versions: Vec<_> = re.captures_iter(&xml).map(|m| m[1].to_string()).collect();
 
         if versions.is_empty() {
             anyhow::bail!("Could not find any version of vmlinux");
@@ -153,11 +144,10 @@ impl FirecrackerStartup {
 
         println!("Download successfull: {}", file_path.display());
 
-        fs::copy(
-            &file_path,
-            path.as_ref().parent().unwrap().join("latest/vmlinux.bin"),
-        )
-        .await?;
+        let target_path = path.as_ref().parent().unwrap().join("latest");
+        fs::create_dir_all(&target_path).await?;
+
+        fs::copy(&file_path, target_path.join("vmlinux.bin")).await?;
 
         Ok(())
     }

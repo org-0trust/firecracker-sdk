@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{env, time::Duration};
 
 use anyhow::Result;
 use firecracker_sdk::firecracker::{
@@ -45,6 +45,11 @@ async fn startup_with_connection() -> Result<()> {
 
 #[tokio::test]
 async fn startup_with_downloading() -> Result<()> {
+    let dir = tempdir()?;
+    unsafe {
+        env::set_var("FIRECRACKER_KERNEL_DOWNLOAD", dir.path().join("download"));
+        env::set_var("FIRECRACKER_KERNEL", dir.path().join("latest/vmlinux.bin"));
+    }
     let startup = FirecrackerStartup::new().download_kernel(true);
     let mut process = startup.start().await?;
     process.stop().await?;
