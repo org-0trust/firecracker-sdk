@@ -4,8 +4,8 @@ use tokio::{
     net::UnixStream,
 };
 
+pub mod firecracker_socket;
 pub mod firercracker_process;
-pub mod vm_socket;
 
 /// A structure that allows you to work safely with VMs
 ///
@@ -15,16 +15,16 @@ pub mod vm_socket;
 ///     .api_sock("/tmp/some.socket")
 ///     .start().unwrap();
 ///
-/// let vm_socket = VMSocket::new().unwrap();
-/// let vm = vm_socket.connect("/tmp/some.socket");
+/// let firecracker_socket = FirecrackerSocket::new().unwrap();
+/// let firecracker_stream = firecracker_socket.connect("/tmp/some.socket");
 /// ```
 #[allow(unused)]
-pub struct VM {
+pub struct FirecrackerStream {
     stream: UnixStream,
 }
 
 #[allow(unused)]
-impl VM {
+impl FirecrackerStream {
     pub(crate) fn new(stream: UnixStream) -> Self {
         Self { stream }
     }
@@ -56,7 +56,7 @@ mod tests {
         net::UnixListener,
     };
 
-    use crate::vm::vm_socket::VMSocket;
+    use crate::firecracker::firecracker_socket::FirecrackerSocket;
 
     #[tokio::test]
     async fn unix_socket_connect_test() -> Result<()> {
@@ -75,7 +75,7 @@ mod tests {
             Ok::<_, anyhow::Error>(())
         });
 
-        let mut client = VMSocket::new()?.connect(socket).await?;
+        let mut client = FirecrackerSocket::new()?.connect(socket).await?;
         client.send_raw(b"ping").await?;
         let mut buf = [0u8; 64];
         let n = client.read_raw(&mut buf).await?;

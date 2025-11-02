@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use firecracker_sdk::vm::{
-    firercracker_process::firecracker_startup::FirecrackerStartup, vm_socket::VMSocket,
+use firecracker_sdk::firecracker::{
+    firecracker_socket::FirecrackerSocket,
+    firercracker_process::firecracker_startup::FirecrackerStartup,
 };
 use tempfile::tempdir;
 
@@ -32,10 +33,10 @@ async fn startup_with_connection() -> Result<()> {
     let mut process = startup.start()?;
 
     tokio::time::sleep(Duration::from_millis(150)).await;
-    let vm_socket = VMSocket::new()?;
+    let socket = FirecrackerSocket::new()?;
 
-    let vm = vm_socket.connect(&socket_path).await?;
-    vm.close().await?;
+    let stream = socket.connect(&socket_path).await?;
+    stream.close().await?;
 
     process.stop().await?;
     dir.close()?;
