@@ -6,9 +6,9 @@
 //!     .api_sock("/tmp/some.socket")
 //!     .start().unwrap();
 //!
-//! let vm_socket = VMSocket::new().unwrap();
-//! let vm = vm_socket.connect("/tmp/some.socket");
+//! let firecracker_socket = FirecrackerSocket::new().unwrap();
+//! let firecracker_stream = firecracker_socket.connect("/tmp/some.socket");
 //! ```
 //! Before starting work, we recommend that you familiarize yourself with the official [documentation](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
 
-pub mod vm;
+pub mod firecracker;

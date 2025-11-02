@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 use tokio::process::Command;
 
-use crate::vm::firercracker_process::FirecrackerProcess;
+use crate::firecracker::firercracker_process::FirecrackerProcess;
 
 /// A structure for configuring the launch of FirecrackerVM. Helps to preconfigure and start the virtual machine.
 ///
