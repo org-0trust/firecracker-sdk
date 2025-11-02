@@ -1,6 +1,6 @@
 [package]
 name = "firecracker-sdk"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 authors = [ "morphqdd <github.com/morphqdd>" ]
 description = "SDK for working with Firecracker MicroVM using the Rust programming language"
