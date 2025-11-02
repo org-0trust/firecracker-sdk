@@ -68,34 +68,30 @@ impl FirecrackerStartup {
         let path = if env_path.is_ok() {
             PathBuf::from(env_path?)
         } else {
-            PathBuf::from(
-                env::home_dir()
-                    .unwrap_or(
-                        env::current_exe()?
-                            .parent()
-                            .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                            .to_path_buf(),
-                    )
-                    .join(".firecracker_kernel/latest/vmlinux.bin"),
-            )
+            env::home_dir()
+                .unwrap_or(
+                    env::current_exe()?
+                        .parent()
+                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                        .to_path_buf(),
+                )
+                .join(".firecracker_kernel/latest/vmlinux.bin")
         };
 
         let download_path = if env_download_path.is_ok() {
             PathBuf::from(env_download_path?)
         } else {
-            PathBuf::from(
-                env::home_dir()
-                    .unwrap_or(
-                        env::current_exe()?
-                            .parent()
-                            .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                            .to_path_buf(),
-                    )
-                    .join(".firecracker_kernel/download"),
-            )
+            env::home_dir()
+                .unwrap_or(
+                    env::current_exe()?
+                        .parent()
+                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                        .to_path_buf(),
+                )
+                .join(".firecracker_kernel/download")
         };
 
-        if self.download_kernel == true {
+        if self.download_kernel {
             Self::catch_kernel(download_path).await?;
         }
 
@@ -123,11 +119,11 @@ impl FirecrackerStartup {
         versions.sort();
         let latest = versions.last().unwrap();
 
-        let file_name = latest.split('/').last().unwrap();
+        let file_name = latest.split('/').next_back().unwrap();
         let file_path = download_dir.join(file_name);
 
         if file_path.exists() {
-            println!("Already download: {}", file_name);
+            println!("Already download: {}", file_path.display());
             return Ok(());
         }
 
