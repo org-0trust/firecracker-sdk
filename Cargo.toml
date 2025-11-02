@@ -5,7 +5,7 @@ edition = "2024"
 authors = [ "morphqdd <github.com/morphqdd>" ]
 description = "SDK for working with Firecracker MicroVM using the Rust programming language"
 repository = "https://github.com/org-0trust/firecracker-sdk"
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["sdk", "aws", "api", "firecracker", "firecracker-sdk"]
 categories = ["api-bindings", "virtualization", "config"]
 
