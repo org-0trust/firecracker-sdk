@@ -6,7 +6,6 @@ use std::{
 
 use anyhow::Result;
 use regex::Regex;
-use reqwest::Client;
 use tokio::{fs, process::Command};
 
 use crate::{
@@ -142,7 +141,7 @@ impl FirecrackerStartup {
             return Ok(());
         }
 
-        let bytes = aws_s3.download(&latest).await?;
+        let bytes = aws_s3.download(latest).await?;
         fs::write(&file_path, &bytes).await?;
 
         println!("Download successfull: {}", file_path.display());
@@ -219,7 +218,7 @@ impl FirecrackerStartup {
             return Ok(());
         }
 
-        let bytes = aws_s3.download(&latest).await?;
+        let bytes = aws_s3.download(latest).await?;
         fs::write(&file_path, &bytes).await?;
 
         println!("Download successfull: {}", file_path.display());
