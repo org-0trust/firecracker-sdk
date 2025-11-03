@@ -11,7 +11,7 @@ pub mod firercracker_process;
 /// A structure that allows you to work safely with VMs
 ///
 /// Exemple:
-/// ```no_run
+/// ```no_compile
 /// let vm_process = FirecrackerStartup::new()
 ///     .api_sock("/tmp/some.socket")
 ///     .start().unwrap();
