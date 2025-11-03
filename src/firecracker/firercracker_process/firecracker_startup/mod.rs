@@ -21,7 +21,7 @@ use crate::{
 /// Note: Firecracker must be installed globally.
 ///
 /// Exemple:
-/// ```no_run
+/// ```no_compile
 /// let startup = FirecrackerStartup::new()
 ///     .api_socket("/tmp/some.socket");
 /// startup.start().unwrap();

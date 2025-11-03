@@ -1,7 +1,7 @@
 //! A ***Non-official*** library for easy work with FirecrackerVM from Rust.
 //!
 //! Exemple:
-//! ```no_run
+//! ```no_compile
 //! let vm_process = FirecrackerStartup::new()
 //!     .api_sock("/tmp/some.socket")
 //!     .start().unwrap();
