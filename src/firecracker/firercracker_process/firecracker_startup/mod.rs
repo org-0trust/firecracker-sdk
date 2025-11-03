@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::Result;
 use regex::Regex;
-use tokio::{fs, join, process::Command};
+use tokio::{join, process::Command};
 
 use crate::{
     aws_s3::AwsS3,
