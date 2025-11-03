@@ -52,7 +52,7 @@ async fn startup_with_downloading() -> Result<()> {
         env::set_var("FIRECRACKER_ROOTFS_DOWNLOAD", dir.path().join("download"));
         env::set_var(
             "FIRECRACKER_ROOTFS",
-            dir.path().join("latest/ubuntu-22.04.ext4"),
+            dir.path().join("latest/vmrootfs.ext4"),
         );
     }
     let startup = FirecrackerStartup::new()
@@ -61,6 +61,7 @@ async fn startup_with_downloading() -> Result<()> {
     let mut process = startup.start().await?;
     process.stop().await?;
 
+    println!("{}", process.get_config().drive_path().display());
     assert!(process.get_config().kernel_image_path().exists());
     assert!(process.get_config().drive_path().exists());
     Ok(())

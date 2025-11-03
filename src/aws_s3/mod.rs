@@ -1,5 +1,9 @@
+use std::path::Path;
+
 use anyhow::Result;
+use regex::Regex;
 use reqwest::Client;
+use tokio::fs;
 
 pub struct AwsS3 {
     xml_base_path: String,
@@ -36,5 +40,42 @@ impl AwsS3 {
             .bytes()
             .await?
             .into())
+    }
+
+    pub async fn catch_latest<P: AsRef<Path>>(
+        &self,
+        download_dir: P,
+        re: Regex,
+        target_filename: &str,
+    ) -> Result<()> {
+        fs::create_dir_all(&download_dir).await?;
+
+        let xml = self.xml().await?;
+        let mut versions: Vec<_> = re.captures_iter(&xml).map(|m| m[1].to_string()).collect();
+        if versions.is_empty() {
+            anyhow::bail!("Could not find any version");
+        }
+
+        versions.sort();
+        let latest = versions.last().unwrap();
+
+        let file_name = latest.split('/').next_back().unwrap();
+        let file_path = download_dir.as_ref().join(file_name);
+
+        if file_path.exists() {
+            println!("Already download: {}", file_path.display());
+            return Ok(());
+        }
+
+        let bytes = self.download(latest).await?;
+        fs::write(&file_path, &bytes).await?;
+
+        println!("Download successfull: {}", file_path.display());
+
+        let target_path = download_dir.as_ref().parent().unwrap().join("latest");
+        fs::create_dir_all(&target_path).await?;
+
+        fs::copy(&file_path, target_path.join(target_filename)).await?;
+        Ok(())
     }
 }
