@@ -49,11 +49,19 @@ async fn startup_with_downloading() -> Result<()> {
     unsafe {
         env::set_var("FIRECRACKER_KERNEL_DOWNLOAD", dir.path().join("download"));
         env::set_var("FIRECRACKER_KERNEL", dir.path().join("latest/vmlinux.bin"));
+        env::set_var("FIRECRACKER_ROOTFS_DOWNLOAD", dir.path().join("download"));
+        env::set_var(
+            "FIRECRACKER_ROOTFS",
+            dir.path().join("latest/ubuntu-22.04.ext4"),
+        );
     }
-    let startup = FirecrackerStartup::new().download_kernel(true);
+    let startup = FirecrackerStartup::new()
+        .download_kernel(true)
+        .download_rootfs(true);
     let mut process = startup.start().await?;
     process.stop().await?;
 
     assert!(process.get_config().kernel_image_path().exists());
+    assert!(process.get_config().drive_path().exists());
     Ok(())
 }
