@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::Result;
 use regex::Regex;
-use tokio::{fs, process::Command};
+use tokio::{fs, join, process::Command};
 
 use crate::{
     aws_s3::AwsS3,
@@ -63,172 +63,114 @@ impl FirecrackerStartup {
     }
 
     async fn setup_config(&self) -> Result<FirecrackerConfiguration> {
+        let download_kernel_flag = self.download_kernel;
+        let download_rootfs_flag = self.download_kernel;
+        let kernel_path_task =
+            tokio::spawn(async move { Self::get_kernel(download_kernel_flag).await });
+        let rootfs_path_task =
+            tokio::spawn(async move { Self::get_rootfs(download_rootfs_flag).await });
+        let (kernel_path, rootfs_path) = join!(kernel_path_task, rootfs_path_task);
         Ok(FirecrackerConfiguration {
             boot_source: BootSource {
-                kernel_image_path: self.get_kernel().await?,
+                kernel_image_path: kernel_path??,
                 boot_args: HashMap::new(),
             },
             drives: Drives {
                 drive_id: "rootfs".into(),
-                path_on_host: self.get_rootfs().await?,
+                path_on_host: rootfs_path??,
                 is_root_device: true,
                 is_read_only: false,
             },
         })
     }
 
-    async fn get_kernel(&self) -> Result<PathBuf> {
+    async fn get_kernel(download_kernel: bool) -> Result<PathBuf> {
         let env_path = env::var("FIRECRACKER_KERNEL");
         let env_download_path = env::var("FIRECRACKER_KERNEL_DOWNLOAD");
         let path = if env_path.is_ok() {
             PathBuf::from(env_path?)
         } else {
-            env::home_dir()
-                .unwrap_or(
-                    env::current_exe()?
-                        .parent()
-                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                        .to_path_buf(),
-                )
-                .join(".firecracker_kernel/latest/vmlinux.bin")
+            Self::get_target_path(".firecracker/kernel", "vmlinux.bin")?
         };
 
         let download_path = if env_download_path.is_ok() {
             PathBuf::from(env_download_path?)
         } else {
-            env::home_dir()
-                .unwrap_or(
-                    env::current_exe()?
-                        .parent()
-                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                        .to_path_buf(),
-                )
-                .join(".firecracker_kernel/download")
+            Self::get_download_path(".firecracker/rootfs")?
         };
 
-        if self.download_kernel {
-            Self::catch_kernel(download_path).await?;
+        if download_kernel {
+            let prefix = "firecracker-ci/v1.10/x86_64/vmlinux-5.10";
+
+            let aws_s3 = AwsS3::new(prefix);
+            let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/vmlinux-5\.10\.\d{3})</Key>")?;
+            let filename = path
+                .to_string_lossy()
+                .split('/')
+                .next_back()
+                .unwrap()
+                .to_string();
+
+            aws_s3.catch_latest(&download_path, re, &filename).await?;
         }
 
         Ok(path)
     }
 
-    async fn catch_kernel<P: AsRef<Path>>(path: P) -> Result<()> {
-        let prefix = "firecracker-ci/v1.10/x86_64/vmlinux-5.10";
-
-        let aws_s3 = AwsS3::new(prefix);
-
-        let download_dir = path.as_ref();
-        fs::create_dir_all(download_dir).await?;
-
-        let xml = aws_s3.xml().await?;
-
-        let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/vmlinux-5\.10\.\d{3})</Key>")?;
-        let mut versions: Vec<_> = re.captures_iter(&xml).map(|m| m[1].to_string()).collect();
-
-        if versions.is_empty() {
-            anyhow::bail!("Could not find any version of vmlinux");
-        }
-
-        versions.sort();
-        let latest = versions.last().unwrap();
-
-        let file_name = latest.split('/').next_back().unwrap();
-        let file_path = download_dir.join(file_name);
-
-        if file_path.exists() {
-            println!("Already download: {}", file_path.display());
-            return Ok(());
-        }
-
-        let bytes = aws_s3.download(latest).await?;
-        fs::write(&file_path, &bytes).await?;
-
-        println!("Download successfull: {}", file_path.display());
-
-        let target_path = path.as_ref().parent().unwrap().join("latest");
-        fs::create_dir_all(&target_path).await?;
-
-        fs::copy(&file_path, target_path.join("vmlinux.bin")).await?;
-
-        Ok(())
-    }
-
-    async fn get_rootfs(&self) -> Result<PathBuf> {
+    async fn get_rootfs(download_rootfs: bool) -> Result<PathBuf> {
         let env_path = env::var("FIRECRACKER_ROOTFS");
         let env_download_path = env::var("FIRECRACKER_ROOTFS_DOWNLOAD");
         let path = if env_path.is_ok() {
             PathBuf::from(env_path?)
         } else {
-            env::home_dir()
-                .unwrap_or(
-                    env::current_exe()?
-                        .parent()
-                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                        .to_path_buf(),
-                )
-                .join(".firecracker_kernel/latest/vmlinux.bin")
+            Self::get_target_path(".firecracker/rootfs", "vmrootfs.ext4")?
         };
 
         let download_path = if env_download_path.is_ok() {
             PathBuf::from(env_download_path?)
         } else {
-            env::home_dir()
-                .unwrap_or(
-                    env::current_exe()?
-                        .parent()
-                        .ok_or(anyhow::anyhow!("Current app is higher then root"))?
-                        .to_path_buf(),
-                )
-                .join(".firecracker_kernel/download")
+            Self::get_download_path(".firecracker/rootfs")?
         };
 
-        if self.download_rootfs {
-            Self::catch_rootfs(download_path).await?;
+        if download_rootfs {
+            let prefix = "firecracker-ci/v1.10/x86_64/ubuntu-22.04.ext4";
+
+            let aws_s3 = AwsS3::new(prefix);
+            let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/ubuntu-22\.04\.ext4)</Key>")?;
+
+            let filename = path
+                .to_string_lossy()
+                .split('/')
+                .next_back()
+                .unwrap()
+                .to_string();
+
+            aws_s3.catch_latest(&download_path, re, &filename).await?;
         }
 
         Ok(path)
     }
 
-    async fn catch_rootfs<P: AsRef<Path>>(path: P) -> Result<()> {
-        let prefix = "firecracker-ci/v1.10/x86_64/ubuntu-22.04.ext4";
+    fn get_target_path<P: AsRef<Path>>(base_path: P, item: &str) -> Result<PathBuf> {
+        Ok(env::home_dir()
+            .unwrap_or(
+                env::current_exe()?
+                    .parent()
+                    .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                    .to_path_buf(),
+            )
+            .join(format!("{}/latest/{item}", base_path.as_ref().display())))
+    }
 
-        let aws_s3 = AwsS3::new(prefix);
-
-        let download_dir = path.as_ref();
-        fs::create_dir_all(download_dir).await?;
-
-        let xml = aws_s3.xml().await?;
-
-        let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/ubuntu-22\.04\.ext4)</Key>")?;
-        let mut versions: Vec<_> = re.captures_iter(&xml).map(|m| m[1].to_string()).collect();
-
-        if versions.is_empty() {
-            anyhow::bail!("Could not find any version of ubuntu-22.04.ext4");
-        }
-
-        versions.sort();
-        let latest = versions.last().unwrap();
-
-        let file_name = latest.split('/').next_back().unwrap();
-        let file_path = download_dir.join(file_name);
-
-        if file_path.exists() {
-            println!("Already download: {}", file_path.display());
-            return Ok(());
-        }
-
-        let bytes = aws_s3.download(latest).await?;
-        fs::write(&file_path, &bytes).await?;
-
-        println!("Download successfull: {}", file_path.display());
-
-        let target_path = path.as_ref().parent().unwrap().join("latest");
-        fs::create_dir_all(&target_path).await?;
-
-        fs::copy(&file_path, target_path.join("ubuntu-22.04.ext4")).await?;
-
-        Ok(())
+    fn get_download_path<P: AsRef<Path>>(base_path: P) -> Result<PathBuf> {
+        Ok(env::home_dir()
+            .unwrap_or(
+                env::current_exe()?
+                    .parent()
+                    .ok_or(anyhow::anyhow!("Current app is higher then root"))?
+                    .to_path_buf(),
+            )
+            .join(format!("{}/download/", base_path.as_ref().display())))
     }
 
     /// Starts a VM with specified parameters
