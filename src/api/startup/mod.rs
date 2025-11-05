@@ -1,20 +1,14 @@
 use std::{
     collections::HashMap,
-    env,
     path::{Path, PathBuf},
 };
 
 use anyhow::Result;
-use regex::Regex;
-use tokio::{join, process::Command};
+use serde::Serialize;
 
 use crate::{
-    aws_s3::AwsS3,
-    domain::{fs::FileManager, s3::S3Downloader},
-    firecracker::{
-        firecracker_configuration::{BootSource, Drives, FirecrackerConfiguration},
-        firercracker_process::FirecrackerProcess,
-    },
+    domain::config::{BootSource, Drives, FirecrackerConfiguration},
+    infrastructure::{fs::FileManager, process::FirecrackerProcess, s3::S3Downloader},
 };
 
 /// A structure for configuring the launch of FirecrackerVM. Helps to preconfigure and start the virtual machine.
@@ -27,8 +21,9 @@ use crate::{
 ///     .api_socket("/tmp/some.socket");
 /// startup.start().unwrap();
 /// ```
+#[derive(Serialize)]
 pub struct FirecrackerStartup {
-    api_socket: Option<PathBuf>,
+    api_socket: PathBuf,
     download_kernel: bool,
     download_rootfs: bool,
 }
@@ -37,7 +32,7 @@ impl FirecrackerStartup {
     /// Creates a new instance of FirecrackerStartup
     pub fn new() -> Self {
         Self {
-            api_socket: None,
+            api_socket: PathBuf::new(),
             download_kernel: false,
             download_rootfs: false,
         }
@@ -46,9 +41,16 @@ impl FirecrackerStartup {
     /// Adds the --api-sock startup argument with the path to the unix socket
     ///
     /// Note: For the best documentation, please refer to [here](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
-    pub fn api_socket<P: AsRef<Path>>(mut self, path: P) -> Self {
-        self.api_socket = Some(path.as_ref().to_path_buf());
+    pub fn set_api_socket<P: AsRef<Path>>(mut self, path: P) -> Self {
+        self.api_socket = path.as_ref().to_path_buf();
         self
+    }
+
+    /// Returns the --api-sock startup argument with the path to the unix socket
+    ///
+    /// Note: For the best documentation, please refer to [here](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
+    pub fn get_api_socket<P: AsRef<Path>>(&self) -> &PathBuf {
+        &self.api_socket
     }
 
     /// Flag to download the latest kernel version for microVM
@@ -70,7 +72,20 @@ impl FirecrackerStartup {
         let kernel_path = fs.resolve_kernel_path(self.download_kernel, &s3).await?;
         let rootfs_path = fs.resolve_rootfs_path(self.download_rootfs, &s3).await?;
 
-        Ok(FirecrackerProcess::new())
+        Ok(FirecrackerProcess::new(FirecrackerConfiguration {
+            startup_config: self,
+            boot_source: BootSource {
+                kernel_image_path: kernel_path,
+                boot_args: HashMap::new(),
+            },
+            drives: Drives {
+                drive_id: "rootfs".into(),
+                path_on_host: rootfs_path,
+                is_root_device: true,
+                is_read_only: false,
+            },
+        })
+        .await?)
     }
 }
 
