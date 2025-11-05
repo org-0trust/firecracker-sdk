@@ -13,3 +13,7 @@
 
 pub(crate) mod aws_s3;
 pub mod firecracker;
+
+pub mod api;
+pub mod domain;
+pub mod infrastructure;

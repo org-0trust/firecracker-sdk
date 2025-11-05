@@ -103,7 +103,7 @@ impl FirecrackerStartup {
             let prefix = "firecracker-ci/v1.10/x86_64/vmlinux-5.10";
 
             let aws_s3 = AwsS3::new(prefix);
-            let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/vmlinux-5\.10\.\d{3})</Key>")?;
+            let re = ?;
             let filename = path
                 .to_string_lossy()
                 .split('/')
@@ -136,7 +136,7 @@ impl FirecrackerStartup {
             let prefix = "firecracker-ci/v1.10/x86_64/ubuntu-22.04.ext4";
 
             let aws_s3 = AwsS3::new(prefix);
-            let re = Regex::new(r"<Key>(firecracker-ci/v1\.10/x86_64/ubuntu-22\.04\.ext4)</Key>")?;
+            let re = ?;
 
             let filename = path
                 .to_string_lossy()
