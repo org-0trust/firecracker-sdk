@@ -55,7 +55,7 @@ impl FileManager {
         let target = self.rootfs_path.join("vmrootfs.ext4");
 
         if download_rootfs {
-            let bytes = s3.download(S3Item::Kernel).await?;
+            let bytes = s3.download(S3Item::Rootfs).await?;
             fs::write(&target, bytes).await?
         }
 

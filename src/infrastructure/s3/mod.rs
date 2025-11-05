@@ -34,16 +34,6 @@ impl Default for S3Downloader {
 }
 
 impl S3Downloader {
-    pub fn set_ketnel_prefix(mut self, kernel_prefix: &str, kernel_regex: Regex) -> Self {
-        self.kernel_prefix = (kernel_prefix.to_string(), kernel_regex);
-        self
-    }
-
-    pub fn set_rootfs_prefix(mut self, rootfs_prefix: &str, rootfs_regex: Regex) -> Self {
-        self.rootfs_prefix = (rootfs_prefix.to_string(), rootfs_regex);
-        self
-    }
-
     async fn download_item(&self, item: &str) -> Result<Vec<u8>> {
         Ok(Client::new()
             .get(format!("{}/{}", self.download_path, item))

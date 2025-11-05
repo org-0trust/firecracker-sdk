@@ -20,6 +20,7 @@ pub(crate) struct Stream {
     stream: UnixStream,
 }
 
+#[allow(unused)]
 impl Stream {
     pub(crate) fn new(stream: UnixStream) -> Self {
         Self { stream }

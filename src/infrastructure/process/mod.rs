@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf, time::Duration};
+use std::{env, time::Duration};
 
 use anyhow::Result;
 use tokio::process::{Child, Command};
@@ -20,9 +20,9 @@ impl FirecrackerProcess {
         Ok(Self {
             process: {
                 let child = Command::new(env::var("FIRECRACKER").unwrap_or("firecracker".into()))
-                    .args(&[
+                    .args([
                         "--api-sock",
-                        &configuration
+                        configuration
                             .startup_config
                             .get_api_socket()
                             .to_str()

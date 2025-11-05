@@ -72,7 +72,7 @@ impl FirecrackerStartup {
         let kernel_path = fs.resolve_kernel_path(self.download_kernel, &s3).await?;
         let rootfs_path = fs.resolve_rootfs_path(self.download_rootfs, &s3).await?;
 
-        Ok(FirecrackerProcess::new(FirecrackerConfiguration {
+        FirecrackerProcess::new(FirecrackerConfiguration {
             startup_config: self,
             boot_source: BootSource {
                 kernel_image_path: kernel_path,
@@ -85,7 +85,7 @@ impl FirecrackerStartup {
                 is_read_only: false,
             },
         })
-        .await?)
+        .await
     }
 }
 
