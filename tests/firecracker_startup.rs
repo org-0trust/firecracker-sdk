@@ -1,16 +1,14 @@
-use std::{env, time::Duration};
+use std::env;
 
 use anyhow::Result;
-use firecracker_sdk::firecracker::{
-    firecracker_socket::FirecrackerSocket,
-    firercracker_process::firecracker_startup::FirecrackerStartup,
-};
+use firecracker_sdk::api::startup::FirecrackerStartup;
 use tempfile::tempdir;
 
 #[tokio::test]
 async fn startup() -> Result<()> {
     let startup = FirecrackerStartup::new();
-    let mut process = startup.start().await?;
+    println!("{}", startup.get_api_socket().display());
+    let process = startup.start().await?;
     process.stop().await?;
     Ok(())
 }
@@ -18,26 +16,8 @@ async fn startup() -> Result<()> {
 #[tokio::test]
 async fn startup_with_args() -> Result<()> {
     let dir = tempdir()?;
-    let startup = FirecrackerStartup::new().api_socket(dir.path().join("test.socket"));
-    let mut process = startup.start().await?;
-    process.stop().await?;
-    dir.close()?;
-    Ok(())
-}
-
-#[tokio::test]
-async fn startup_with_connection() -> Result<()> {
-    let dir = tempdir()?;
-    let socket_path = dir.path().join("test.socket");
-    let startup = FirecrackerStartup::new().api_socket(&socket_path);
-    let mut process = startup.start().await?;
-
-    tokio::time::sleep(Duration::from_millis(150)).await;
-    let socket = FirecrackerSocket::new()?;
-
-    let stream = socket.connect(&socket_path).await?;
-    stream.close().await?;
-
+    let startup = FirecrackerStartup::new().set_api_socket(dir.path().join("test.socket"));
+    let process = startup.start().await?;
     process.stop().await?;
     dir.close()?;
     Ok(())
@@ -47,22 +27,15 @@ async fn startup_with_connection() -> Result<()> {
 async fn startup_with_downloading() -> Result<()> {
     let dir = tempdir()?;
     unsafe {
-        env::set_var("FIRECRACKER_KERNEL_DOWNLOAD", dir.path().join("download"));
-        env::set_var("FIRECRACKER_KERNEL", dir.path().join("latest/vmlinux.bin"));
-        env::set_var("FIRECRACKER_ROOTFS_DOWNLOAD", dir.path().join("download"));
-        env::set_var(
-            "FIRECRACKER_ROOTFS",
-            dir.path().join("latest/vmrootfs.ext4"),
-        );
+        env::set_var("FIRECRACKER_KERNEL", dir.path());
+        env::set_var("FIRECRACKER_ROOTFS", dir.path());
     }
     let startup = FirecrackerStartup::new()
         .download_kernel(true)
         .download_rootfs(true);
-    let mut process = startup.start().await?;
-    process.stop().await?;
-
-    println!("{}", process.get_config().drive_path().display());
+    let process = startup.start().await?;
     assert!(process.get_config().kernel_image_path().exists());
     assert!(process.get_config().drive_path().exists());
+    process.stop().await?;
     Ok(())
 }

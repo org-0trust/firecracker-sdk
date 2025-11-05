@@ -2,8 +2,11 @@ use std::{collections::HashMap, path::PathBuf};
 
 use serde::Serialize;
 
+use crate::api::startup::FirecrackerStartup;
+
 #[derive(Serialize)]
 pub struct FirecrackerConfiguration {
+    pub(crate) startup_config: FirecrackerStartup,
     pub(crate) boot_source: BootSource,
     pub(crate) drives: Drives,
 }

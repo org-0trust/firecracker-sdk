@@ -1,12 +1,9 @@
 use anyhow::Result;
 use tokio::{
+    fs,
     io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
 };
-
-pub mod firecracker_configuration;
-pub mod firecracker_socket;
-pub mod firercracker_process;
 
 /// A structure that allows you to work safely with VMs
 ///
@@ -19,29 +16,29 @@ pub mod firercracker_process;
 /// let firecracker_socket = FirecrackerSocket::new().unwrap();
 /// let firecracker_stream = firecracker_socket.connect("/tmp/some.socket");
 /// ```
-#[allow(unused)]
-pub struct FirecrackerStream {
+pub(crate) struct Stream {
     stream: UnixStream,
 }
 
 #[allow(unused)]
-impl FirecrackerStream {
+impl Stream {
     pub(crate) fn new(stream: UnixStream) -> Self {
         Self { stream }
     }
 
-    async fn send_raw(&mut self, raw: &[u8]) -> Result<()> {
+    pub(crate) async fn send_raw(&mut self, raw: &[u8]) -> Result<()> {
         self.stream.write_all(raw).await?;
         Ok(())
     }
 
-    async fn read_raw(&mut self, raw: &mut [u8]) -> Result<usize> {
+    pub(crate) async fn read_raw(&mut self, raw: &mut [u8]) -> Result<usize> {
         Ok(self.stream.read(raw).await?)
     }
 
     /// Safely closes the unix stream
     pub async fn close(mut self) -> Result<()> {
         self.stream.shutdown().await?;
+        fs::remove_file(self.stream.peer_addr()?.as_pathname().unwrap()).await?;
         Ok(())
     }
 }
@@ -57,7 +54,7 @@ mod tests {
         net::UnixListener,
     };
 
-    use crate::firecracker::firecracker_socket::FirecrackerSocket;
+    use crate::infrastructure::connection::socket::Socket;
 
     #[tokio::test]
     async fn unix_socket_connect_test() -> Result<()> {
@@ -76,7 +73,7 @@ mod tests {
             Ok::<_, anyhow::Error>(())
         });
 
-        let mut client = FirecrackerSocket::new()?.connect(socket).await?;
+        let mut client = Socket::new()?.connect(socket).await?;
         client.send_raw(b"ping").await?;
         let mut buf = [0u8; 64];
         let n = client.read_raw(&mut buf).await?;
