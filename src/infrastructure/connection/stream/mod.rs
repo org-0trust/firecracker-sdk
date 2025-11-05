@@ -1,5 +1,6 @@
 use anyhow::Result;
 use tokio::{
+    fs,
     io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
 };
@@ -36,6 +37,7 @@ impl Stream {
     /// Safely closes the unix stream
     pub async fn close(mut self) -> Result<()> {
         self.stream.shutdown().await?;
+        fs::remove_file(self.stream.peer_addr()?.as_pathname().unwrap()).await?;
         Ok(())
     }
 }

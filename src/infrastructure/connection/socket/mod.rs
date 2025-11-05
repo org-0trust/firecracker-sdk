@@ -20,6 +20,6 @@ impl Socket {
     /// Creates a Unix stream for communicating with the Firecracker via a specified path
     pub async fn connect<P: AsRef<Path>>(self, path: P) -> Result<Stream> {
         let stream = self.socket.connect(&path).await?;
-        Ok(FirecrackerStream::new(stream))
+        Ok(Stream::new(stream))
     }
 }

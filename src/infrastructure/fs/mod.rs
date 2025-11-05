@@ -3,7 +3,7 @@ use std::{env, path::PathBuf};
 use anyhow::Result;
 use tokio::fs;
 
-use crate::domain::s3::{S3Downloader, S3Item};
+use crate::infrastructure::s3::{S3Downloader, S3Item};
 
 pub struct FileManager {
     kernel_path: PathBuf,
@@ -11,11 +11,27 @@ pub struct FileManager {
 }
 
 impl FileManager {
-    pub fn new() -> Result<Self> {
-        Ok(Self {
-            kernel_path: PathBuf::from(env::var("FIRECRACKER_KERNEL")?),
-            rootfs_path: PathBuf::from(env::var("FIRECRACKER_ROOTFS")?),
-        })
+    pub fn new() -> Self {
+        Self {
+            kernel_path: PathBuf::from(
+                env::var("FIRECRACKER_KERNEL").unwrap_or(
+                    env::home_dir()
+                        .unwrap_or(env::current_exe().unwrap().parent().unwrap().to_path_buf())
+                        .join(".firecracker/kernel/target/")
+                        .to_string_lossy()
+                        .to_string(),
+                ),
+            ),
+            rootfs_path: PathBuf::from(
+                env::var("FIRECRACKER_ROOTFS").unwrap_or(
+                    env::home_dir()
+                        .unwrap_or(env::current_exe().unwrap().parent().unwrap().to_path_buf())
+                        .join(".firecracker/rootfs/target/")
+                        .to_string_lossy()
+                        .to_string(),
+                ),
+            ),
+        }
     }
     pub async fn resolve_kernel_path(
         &self,
@@ -49,13 +65,6 @@ impl FileManager {
 
 impl Default for FileManager {
     fn default() -> Self {
-        Self {
-            kernel_path: env::home_dir()
-                .unwrap_or(env::current_exe().unwrap().parent().unwrap().to_path_buf())
-                .join(".firecracker/kernel/target/"),
-            rootfs_path: env::home_dir()
-                .unwrap_or(env::current_exe().unwrap().parent().unwrap().to_path_buf())
-                .join(".firecracker/rootfs/target/"),
-        }
+        Self::new()
     }
 }

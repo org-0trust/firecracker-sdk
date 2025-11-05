@@ -11,9 +11,6 @@
 //! ```
 //! Before starting work, we recommend that you familiarize yourself with the official [documentation](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
 
-pub(crate) mod aws_s3;
-pub mod firecracker;
-
 pub mod api;
 pub mod domain;
 pub mod infrastructure;

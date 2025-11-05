@@ -32,7 +32,7 @@ impl FirecrackerStartup {
     /// Creates a new instance of FirecrackerStartup
     pub fn new() -> Self {
         Self {
-            api_socket: PathBuf::new(),
+            api_socket: PathBuf::from("/tmp/firecracker.socket"),
             download_kernel: false,
             download_rootfs: false,
         }
@@ -49,7 +49,7 @@ impl FirecrackerStartup {
     /// Returns the --api-sock startup argument with the path to the unix socket
     ///
     /// Note: For the best documentation, please refer to [here](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
-    pub fn get_api_socket<P: AsRef<Path>>(&self) -> &PathBuf {
+    pub fn get_api_socket(&self) -> &PathBuf {
         &self.api_socket
     }
 
@@ -66,7 +66,7 @@ impl FirecrackerStartup {
 
     /// Starts a VM with specified parameters
     /// Returns a structure for working with the Firecracker process
-    pub async fn start(mut self) -> Result<FirecrackerProcess> {
+    pub async fn start(self) -> Result<FirecrackerProcess> {
         let fs = FileManager::default();
         let s3 = S3Downloader::default();
         let kernel_path = fs.resolve_kernel_path(self.download_kernel, &s3).await?;

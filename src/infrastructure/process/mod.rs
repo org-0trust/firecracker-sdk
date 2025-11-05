@@ -1,4 +1,4 @@
-use std::{env, time::Duration};
+use std::{env, path::PathBuf, time::Duration};
 
 use anyhow::Result;
 use tokio::process::{Child, Command};
@@ -10,7 +10,7 @@ use crate::{
 
 /// Structure for managing the Firecracker process created using `FirecrackerStartup`
 pub struct FirecrackerProcess {
-    child: Child,
+    process: Child,
     stream: Stream,
     configuration: FirecrackerConfiguration,
 }
@@ -18,14 +18,23 @@ pub struct FirecrackerProcess {
 impl FirecrackerProcess {
     pub(crate) async fn new(configuration: FirecrackerConfiguration) -> Result<Self> {
         Ok(Self {
-            child: {
+            process: {
                 let child = Command::new(env::var("FIRECRACKER").unwrap_or("firecracker".into()))
-                    .args(&["--api_sock", configuration.startup_config.api_socket])
+                    .args(&[
+                        "--api-sock",
+                        &configuration
+                            .startup_config
+                            .get_api_socket()
+                            .to_str()
+                            .unwrap(),
+                    ])
                     .spawn()?;
                 tokio::time::sleep(Duration::from_millis(2)).await;
                 child
             },
-            stream: Socket::new()?.connect(api_socket).await?,
+            stream: Socket::new()?
+                .connect(configuration.startup_config.get_api_socket())
+                .await?,
             configuration,
         })
     }
@@ -35,7 +44,8 @@ impl FirecrackerProcess {
     }
 
     /// Correctly starts the process stop and waits for it to complete
-    pub async fn stop(&mut self) -> Result<()> {
+    pub async fn stop(mut self) -> Result<()> {
+        self.stream.close().await?;
         self.process.kill().await?;
         Ok(())
     }
