@@ -2,12 +2,11 @@
 //!
 //! Exemple:
 //! ```no_compile
-//! let vm_process = FirecrackerStartup::new()
-//!     .api_sock("/tmp/some.socket")
-//!     .start().unwrap();
-//!
-//! let firecracker_socket = FirecrackerSocket::new().unwrap();
-//! let firecracker_stream = firecracker_socket.connect("/tmp/some.socket");
+//! let process = FirecrackerStartup::new()
+//!     .set_api_socket("/tmp/some.socket")
+//!     .download_rootfs(true)
+//!     .download_kernel(true)
+//!     .start().await.unwrap();
 //! ```
 //! Before starting work, we recommend that you familiarize yourself with the official [documentation](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
 
