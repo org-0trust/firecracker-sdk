@@ -17,9 +17,11 @@ use crate::{
 ///
 /// Exemple:
 /// ```no_compile
-/// let startup = FirecrackerStartup::new()
-///     .api_socket("/tmp/some.socket");
-/// startup.start().unwrap();
+/// let process = FirecrackerStartup::new()
+///     .set_api_socket("/tmp/some.socket")
+///     .download_rootfs(true)
+///     .download_kernel(true)
+///     .start().await.unwrap();
 /// ```
 #[derive(Serialize)]
 pub struct FirecrackerStartup {
@@ -38,7 +40,7 @@ impl FirecrackerStartup {
         }
     }
 
-    /// Adds the --api-sock startup argument with the path to the unix socket
+    /// Set the --api-sock startup argument with the path to the unix socket
     ///
     /// Note: For the best documentation, please refer to [here](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
     pub fn set_api_socket<P: AsRef<Path>>(mut self, path: P) -> Self {

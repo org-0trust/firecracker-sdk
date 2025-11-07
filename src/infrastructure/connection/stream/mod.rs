@@ -6,16 +6,6 @@ use tokio::{
 };
 
 /// A structure that allows you to work safely with VMs
-///
-/// Exemple:
-/// ```no_compile
-/// let vm_process = FirecrackerStartup::new()
-///     .api_sock("/tmp/some.socket")
-///     .start().unwrap();
-///
-/// let firecracker_socket = FirecrackerSocket::new().unwrap();
-/// let firecracker_stream = firecracker_socket.connect("/tmp/some.socket");
-/// ```
 pub(crate) struct Stream {
     stream: UnixStream,
 }
