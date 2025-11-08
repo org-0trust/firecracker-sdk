@@ -2,7 +2,7 @@ use std::{env, process::Stdio, time::Duration};
 
 use anyhow::Result;
 use tokio::{
-    io::{AsyncReadExt, Stdout},
+    io::AsyncReadExt,
     process::{Child, Command},
 };
 
