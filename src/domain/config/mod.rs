@@ -9,6 +9,7 @@ pub struct FirecrackerConfiguration {
     pub(crate) startup_config: FirecrackerStartup,
     pub(crate) boot_source: BootSource,
     pub(crate) drives: Drives,
+    pub(crate) vsock: VSock,
 }
 
 impl FirecrackerConfiguration {
@@ -33,4 +34,11 @@ pub(crate) struct Drives {
     pub(crate) path_on_host: PathBuf,
     pub(crate) is_root_device: bool,
     pub(crate) is_read_only: bool,
+}
+
+#[derive(Serialize)]
+pub(crate) struct VSock {
+    pub(crate) vsock_id: String,
+    pub(crate) guest_cid: usize,
+    pub(crate) uds_path: String,
 }

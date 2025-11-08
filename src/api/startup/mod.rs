@@ -8,7 +8,7 @@ use serde::Serialize;
 use tempfile::tempdir;
 
 use crate::{
-    domain::config::{BootSource, Drives, FirecrackerConfiguration},
+    domain::config::{BootSource, Drives, FirecrackerConfiguration, VSock},
     infrastructure::{fs::FileManager, process::FirecrackerProcess, s3::S3Downloader},
 };
 
@@ -27,6 +27,7 @@ use crate::{
 #[derive(Serialize)]
 pub struct FirecrackerStartup {
     api_socket: PathBuf,
+    vsock: PathBuf,
     stdout: bool,
     download_kernel: bool,
     download_rootfs: bool,
@@ -42,6 +43,7 @@ impl FirecrackerStartup {
             download_kernel: false,
             download_rootfs: false,
             stdout: false,
+            vsock: tempdir.path().join("vsock.socket"),
         }
     }
 
@@ -66,6 +68,13 @@ impl FirecrackerStartup {
         self
     }
 
+    /// Set vsock path for vm
+    pub fn vsocket<P: AsRef<Path>>(mut self, path: P) -> Self {
+        self.vsock = path.as_ref().to_path_buf();
+        self
+    }
+
+    /// Returns current flag of stdout
     pub fn current_stdout(&self) -> bool {
         self.stdout
     }
@@ -90,7 +99,6 @@ impl FirecrackerStartup {
         let rootfs_path = fs.resolve_rootfs_path(self.download_rootfs, &s3).await?;
 
         FirecrackerProcess::new(FirecrackerConfiguration {
-            startup_config: self,
             boot_source: BootSource {
                 kernel_image_path: kernel_path,
                 boot_args: HashMap::new(),
@@ -101,6 +109,12 @@ impl FirecrackerStartup {
                 is_root_device: true,
                 is_read_only: false,
             },
+            vsock: VSock {
+                vsock_id: "vsock0".into(),
+                guest_cid: 3,
+                uds_path: self.vsock.to_string_lossy().to_string(),
+            },
+            startup_config: self,
         })
         .await
     }
