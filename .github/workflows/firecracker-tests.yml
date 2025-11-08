@@ -38,4 +38,10 @@ jobs:
       - name: Run Firecracker integration tests
         run: |
           sudo chmod a+rw /dev/kvm || true
-          cargo test --test firecracker_startup -- --nocapture --test-threads=1
+          cargo test \
+            --test startup \
+            --test startup_w_args \
+            --test startup_w_downloading \
+            --test startup_w_stdout \
+            --test startup_wo_stdout \
+            -- --nocapture --test-threads=1
