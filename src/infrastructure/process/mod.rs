@@ -1,7 +1,10 @@
-use std::{env, time::Duration};
+use std::{env, process::Stdio, time::Duration};
 
 use anyhow::Result;
-use tokio::process::{Child, Command};
+use tokio::{
+    io::{AsyncReadExt, Stdout},
+    process::{Child, Command},
+};
 
 use crate::{
     domain::config::FirecrackerConfiguration,
@@ -28,6 +31,10 @@ impl FirecrackerProcess {
                             .to_str()
                             .unwrap(),
                     ])
+                    .stdout(match configuration.startup_config.current_stdout() {
+                        true => Stdio::piped(),
+                        false => Stdio::null(),
+                    })
                     .spawn()?;
                 tokio::time::sleep(Duration::from_millis(2)).await;
                 child
@@ -39,7 +46,17 @@ impl FirecrackerProcess {
         })
     }
 
-    pub fn get_config(&self) -> &FirecrackerConfiguration {
+    pub async fn stdout(&mut self) -> Result<String> {
+        let mut out = String::new();
+        if let Some(mut stdout) = self.process.stdout.take() {
+            let mut buf = vec![];
+            stdout.read_buf(&mut buf).await?;
+            out = String::from_utf8(buf)?.to_string();
+        }
+        Ok(out)
+    }
+
+    pub fn config(&self) -> &FirecrackerConfiguration {
         &self.configuration
     }
 
