@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::Result;
 use serde::Serialize;
+use tempfile::tempdir;
 
 use crate::{
     domain::config::{BootSource, Drives, FirecrackerConfiguration},
@@ -26,6 +27,7 @@ use crate::{
 #[derive(Serialize)]
 pub struct FirecrackerStartup {
     api_socket: PathBuf,
+    stdout: bool,
     download_kernel: bool,
     download_rootfs: bool,
 }
@@ -33,10 +35,13 @@ pub struct FirecrackerStartup {
 impl FirecrackerStartup {
     /// Creates a new instance of FirecrackerStartup
     pub fn new() -> Self {
+        let mut tempdir = tempdir().unwrap();
+        tempdir.disable_cleanup(true);
         Self {
-            api_socket: PathBuf::from("/tmp/firecracker.socket"),
+            api_socket: tempdir.path().join("firecracker.socket"),
             download_kernel: false,
             download_rootfs: false,
+            stdout: false,
         }
     }
 
@@ -53,6 +58,16 @@ impl FirecrackerStartup {
     /// Note: For the best documentation, please refer to [here](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md).
     pub fn get_api_socket(&self) -> &PathBuf {
         &self.api_socket
+    }
+
+    /// Flag to enable/disable vm's stdout
+    pub fn stdout(mut self, flag: bool) -> Self {
+        self.stdout = flag;
+        self
+    }
+
+    pub fn current_stdout(&self) -> bool {
+        self.stdout
     }
 
     /// Flag to download the latest kernel version for microVM
