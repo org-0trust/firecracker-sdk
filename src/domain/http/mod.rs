@@ -60,11 +60,7 @@ impl Http {
                 header_map,
                 body,
             } => {
-                let mut req = format!(
-                    "{} {} HTTP/1.1\r\n",
-                    method,
-                    path.to_string_lossy()
-                );
+                let mut req = format!("{} {} HTTP/1.1\r\n", method, path.to_string_lossy());
 
                 for (k, v) in header_map {
                     req.push_str(&format!("{}: {}\r\n", k, v));
