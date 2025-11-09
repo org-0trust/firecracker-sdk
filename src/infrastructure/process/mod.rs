@@ -68,14 +68,19 @@ impl FirecrackerProcess {
                     .body(to_string(&self.configuration.drives)?),
             )
             .await?;
-        self.stream
-            .send_user_request(
-                Http::new_request("/vsock", Method::PUT)
+        for inet in &self.configuration.network_interfaces {
+            self.stream
+                .send_user_request(
+                    Http::new_request(
+                        format!("/network-interfaces/{}", inet.iface_id),
+                        Method::PUT,
+                    )
                     .add_header("Host", "localhost")
                     .add_header("Content-Type", "application/json")
-                    .body(to_string(&self.configuration.vsock)?),
-            )
-            .await?;
+                    .body(to_string(&inet)?),
+                )
+                .await?;
+        }
         tokio::time::sleep(Duration::from_millis(15)).await;
 
         self.stream
