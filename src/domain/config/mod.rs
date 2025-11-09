@@ -10,6 +10,7 @@ pub struct FirecrackerConfiguration {
     pub(crate) boot_source: BootSource,
     pub(crate) drives: Drives,
     pub(crate) vsock: VSock,
+    pub(crate) network_interfaces: Vec<NetInterface>,
 }
 
 impl FirecrackerConfiguration {
@@ -41,4 +42,11 @@ pub(crate) struct VSock {
     pub(crate) vsock_id: String,
     pub(crate) guest_cid: usize,
     pub(crate) uds_path: String,
+}
+
+#[derive(Serialize)]
+pub(crate) struct NetInterface {
+    pub(crate) iface_id: String,
+    pub(crate) guest_mac: String,
+    pub(crate) host_dev_name: String,
 }
