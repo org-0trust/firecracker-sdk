@@ -59,3 +59,9 @@ pub struct Action {
 pub enum ActionType {
     InstanceStart,
 }
+
+pub(crate) struct NetInterface {
+    pub(crate) iface_id: String,
+    pub(crate) guest_mac: String,
+    pub(crate) host_dev_name: String,
+}

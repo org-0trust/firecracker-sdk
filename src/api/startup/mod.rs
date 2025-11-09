@@ -6,6 +6,8 @@ use std::{
 use anyhow::Result;
 use serde::Serialize;
 use tempfile::tempdir;
+use tun::Configuration;
+use tun_rs::DeviceBuilder;
 
 use crate::{
     domain::config::{BootSource, Drives, FirecrackerConfiguration, NetInterface, VSock},
@@ -99,6 +101,10 @@ impl FirecrackerStartup {
         let rootfs_path = fs.resolve_rootfs_path(self.download_rootfs, &s3).await?;
 
         let host_dev_name = "tap0".into();
+<<<<<<< HEAD
+=======
+        let tap_ip = "172.16.0.1";
+>>>>>>> 96742f4 (bug(#61): Add tun interface support and network config to Firecracker)
 
         // let _dev = DeviceBuilder::new()
         //     .name(&host_dev_name)
