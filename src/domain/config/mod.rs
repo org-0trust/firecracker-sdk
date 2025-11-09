@@ -51,6 +51,7 @@ pub(crate) struct NetInterface {
     pub(crate) host_dev_name: String,
 }
 
+#[derive(Serialize)]
 pub struct Action {
     pub(crate) action_type: ActionType,
 }
@@ -58,10 +59,4 @@ pub struct Action {
 #[derive(Serialize)]
 pub enum ActionType {
     InstanceStart,
-}
-
-pub(crate) struct NetInterface {
-    pub(crate) iface_id: String,
-    pub(crate) guest_mac: String,
-    pub(crate) host_dev_name: String,
 }
