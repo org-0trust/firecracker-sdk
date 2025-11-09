@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use serde::Serialize;
 
@@ -26,7 +26,7 @@ impl FirecrackerConfiguration {
 #[derive(Serialize)]
 pub(crate) struct BootSource {
     pub(crate) kernel_image_path: PathBuf,
-    pub(crate) boot_args: HashMap<String, String>,
+    pub(crate) boot_args: String,
 }
 
 #[derive(Serialize)]
@@ -49,4 +49,14 @@ pub(crate) struct NetInterface {
     pub(crate) iface_id: String,
     pub(crate) guest_mac: String,
     pub(crate) host_dev_name: String,
+}
+
+#[derive(Serialize)]
+pub struct Action {
+    pub(crate) action_type: ActionType,
+}
+
+#[derive(Serialize)]
+pub enum ActionType {
+    InstanceStart,
 }

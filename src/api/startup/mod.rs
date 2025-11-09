@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -108,7 +105,7 @@ impl FirecrackerStartup {
         FirecrackerProcess::new(FirecrackerConfiguration {
             boot_source: BootSource {
                 kernel_image_path: kernel_path,
-                boot_args: HashMap::new(),
+                boot_args: "console=tty reboot=k panic=1 pci=off".into(),
             },
             drives: Drives {
                 drive_id: "rootfs".into(),

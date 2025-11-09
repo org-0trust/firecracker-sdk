@@ -42,3 +42,7 @@ path = "tests/firecracker_startup/startup_wo_stdout.rs"
 [[test]]
 name = "startup_w_stdout"
 path = "tests/firecracker_startup/startup_w_stdout.rs"
+
+[[test]]
+name = "startup_w_start_vm"
+path = "tests/firecracker_startup/startup_w_start_vm.rs"

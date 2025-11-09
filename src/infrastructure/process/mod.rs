@@ -1,13 +1,18 @@
 use std::{env, process::Stdio, time::Duration};
 
 use anyhow::Result;
+use http::Method;
+use serde_json::to_string;
 use tokio::{
     io::AsyncReadExt,
     process::{Child, Command},
 };
 
 use crate::{
-    domain::config::FirecrackerConfiguration,
+    domain::{
+        config::{Action, ActionType, FirecrackerConfiguration},
+        http::Http,
+    },
     infrastructure::connection::{socket::Socket, stream::Stream},
 };
 
@@ -44,6 +49,52 @@ impl FirecrackerProcess {
                 .await?,
             configuration,
         })
+    }
+
+    pub async fn start_vm(&mut self) -> Result<Http> {
+        self.stream
+            .send_user_request(
+                Http::new_request("/boot-source", Method::PUT)
+                    .add_header("Host", "localhost")
+                    .add_header("Content-Type", "application/json")
+                    .body(to_string(&self.configuration.boot_source)?),
+            )
+            .await?;
+        self.stream
+            .send_user_request(
+                Http::new_request("/drives/rootfs", Method::PUT)
+                    .add_header("Host", "localhost")
+                    .add_header("Content-Type", "application/json")
+                    .body(to_string(&self.configuration.drives)?),
+            )
+            .await?;
+        for inet in &self.configuration.network_interfaces {
+            self.stream
+                .send_user_request(
+                    Http::new_request(
+                        format!("/network-interfaces/{}", inet.iface_id),
+                        Method::PUT,
+                    )
+                    .add_header("Host", "localhost")
+                    .add_header("Content-Type", "application/json")
+                    .body(to_string(&inet)?),
+                )
+                .await?;
+        }
+        tokio::time::sleep(Duration::from_millis(15)).await;
+
+        self.stream
+            .send_user_request(
+                Http::new_request("/actions", Method::PUT)
+                    .add_header("Host", "localhost")
+                    .add_header("Content-Type", "application/json")
+                    .body(to_string(&Action {
+                        action_type: ActionType::InstanceStart,
+                    })?),
+            )
+            .await?;
+
+        self.stream.read_req().await
     }
 
     pub async fn stdout(&mut self) -> Result<String> {
