@@ -63,7 +63,7 @@ impl Http {
                 let mut req = format!(
                     "{} {} HTTP/1.1\r\n",
                     method,
-                    path.to_string_lossy().to_string()
+                    path.to_string_lossy()
                 );
 
                 for (k, v) in header_map {

@@ -94,7 +94,7 @@ impl FirecrackerProcess {
             )
             .await?;
 
-        Ok(self.stream.read_req().await?)
+        self.stream.read_req().await
     }
 
     pub async fn stdout(&mut self) -> Result<String> {

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use http::Request;
 use tokio::{
     fs,
     io::{AsyncReadExt, AsyncWriteExt},
