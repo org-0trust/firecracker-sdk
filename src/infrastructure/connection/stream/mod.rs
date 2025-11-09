@@ -1,9 +1,12 @@
 use anyhow::Result;
+use http::Request;
 use tokio::{
     fs,
     io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
 };
+
+use crate::domain::http::Http;
 
 /// A structure that allows you to work safely with VMs
 pub(crate) struct Stream {
@@ -16,13 +19,24 @@ impl Stream {
         Self { stream }
     }
 
+    pub async fn send_user_request(&mut self, req: Http) -> Result<()> {
+        self.send_raw(&req.build()).await?;
+        Ok(())
+    }
+
+    pub async fn read_req(&mut self) -> Result<Http> {
+        let mut buf = vec![];
+        self.read_raw(&mut buf).await?;
+        Ok(Http::from(buf))
+    }
+
     pub(crate) async fn send_raw(&mut self, raw: &[u8]) -> Result<()> {
         self.stream.write_all(raw).await?;
         Ok(())
     }
 
-    pub(crate) async fn read_raw(&mut self, raw: &mut [u8]) -> Result<usize> {
-        Ok(self.stream.read(raw).await?)
+    pub(crate) async fn read_raw(&mut self, raw: &mut Vec<u8>) -> Result<usize> {
+        Ok(self.stream.read_buf(raw).await?)
     }
 
     /// Safely closes the unix stream
@@ -65,7 +79,7 @@ mod tests {
 
         let mut client = Socket::new()?.connect(socket).await?;
         client.send_raw(b"ping").await?;
-        let mut buf = [0u8; 64];
+        let mut buf = vec![];
         let n = client.read_raw(&mut buf).await?;
         assert_eq!(&buf[..n], b"pong");
 
