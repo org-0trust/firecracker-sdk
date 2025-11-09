@@ -3,8 +3,6 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use serde::Serialize;
 use tempfile::tempdir;
-use tun::Configuration;
-use tun_rs::DeviceBuilder;
 
 use crate::{
     domain::config::{BootSource, Drives, FirecrackerConfiguration, NetInterface, VSock},
