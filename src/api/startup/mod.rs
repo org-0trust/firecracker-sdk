@@ -8,7 +8,7 @@ use serde::Serialize;
 use tempfile::tempdir;
 
 use crate::{
-    domain::config::{BootSource, Drives, FirecrackerConfiguration, VSock},
+    domain::config::{BootSource, Drives, FirecrackerConfiguration, NetInterface, VSock},
     infrastructure::{fs::FileManager, process::FirecrackerProcess, s3::S3Downloader},
 };
 
@@ -98,6 +98,13 @@ impl FirecrackerStartup {
         let kernel_path = fs.resolve_kernel_path(self.download_kernel, &s3).await?;
         let rootfs_path = fs.resolve_rootfs_path(self.download_rootfs, &s3).await?;
 
+        let host_dev_name = "tap0".into();
+
+        // let _dev = DeviceBuilder::new()
+        //     .name(&host_dev_name)
+        //     .ipv4(tap_ip, "255.255.255.252", None)
+        //     .build_async()?;
+
         FirecrackerProcess::new(FirecrackerConfiguration {
             boot_source: BootSource {
                 kernel_image_path: kernel_path,
@@ -114,6 +121,11 @@ impl FirecrackerStartup {
                 guest_cid: 3,
                 uds_path: self.vsock.to_string_lossy().to_string(),
             },
+            network_interfaces: vec![NetInterface {
+                iface_id: "net1".into(),
+                guest_mac: "06:00:AC:10:00:02".into(),
+                host_dev_name,
+            }],
             startup_config: self,
         })
         .await
