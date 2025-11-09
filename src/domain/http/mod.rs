@@ -176,17 +176,14 @@ mod tests {
     fn test_simple() {
         let raw = b"HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: text/plain\r\n\r\nHello, world!";
         let res = parse_http_response(raw).unwrap();
-        match res {
-            Http::Response {
+        if let Http::Response {
                 code,
                 header_map,
                 body,
-            } => {
-                assert_eq!(code, StatusCode::OK);
-                assert_eq!(header_map.get("content-type").unwrap(), "text/plain");
-                assert_eq!(body, "Hello, world!");
-            }
-            _ => {}
+            } = res {
+            assert_eq!(code, StatusCode::OK);
+            assert_eq!(header_map.get("content-type").unwrap(), "text/plain");
+            assert_eq!(body, "Hello, world!");
         }
     }
 
@@ -194,9 +191,6 @@ mod tests {
     fn test_chunked() {
         let raw = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n6\r\n, worl\r\n2\r\nd!\r\n0\r\n\r\n";
         let res = parse_http_response(raw).unwrap();
-        match res {
-            Http::Response { body, .. } => assert_eq!(body, "Hello, world!"),
-            _ => {}
-        }
+        if let Http::Response { body, .. } = res { assert_eq!(body, "Hello, world!") }
     }
 }
